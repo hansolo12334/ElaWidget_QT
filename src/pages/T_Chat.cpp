@@ -6,6 +6,7 @@
 #include "ElaImageCard.h"
 #include "ElaIconButton.h"
 #include "ElaScrollArea.h"
+#include "ElaPushButton.h"
 #include "ElaText.h"
 
 
@@ -24,12 +25,15 @@ T_Chat::T_Chat(QWidget *parent) : T_BasePage(parent)
     ElaScrollArea *cardScrollArea = new ElaScrollArea(this);
 
 
-    ElaIconButton *sendButton = new ElaIconButton(this);
-
+    ElaLineEdit *text_input_edit = new ElaLineEdit(this);
+    ElaPushButton *sendButton = new ElaPushButton(this);
+    QHBoxLayout *text_input_layout = new QHBoxLayout();
+    text_input_layout->addWidget(text_input_edit);
+    text_input_layout->addWidget(sendButton);
 
 
     backgroundLayout->addWidget(cardScrollArea);
-
+    backgroundLayout->addLayout(text_input_layout);
 
 
     QWidget *centralWidget = new QWidget(this);
@@ -44,5 +48,10 @@ T_Chat::T_Chat(QWidget *parent) : T_BasePage(parent)
     // centerVLayout->addLayout(flowLayout);
     // centerVLayout->addStretch();
     this->addCentralWidget(centralWidget);
+
+}
+
+T_Chat::~T_Chat()
+{
 
 }

@@ -16,14 +16,14 @@ public:
     Q_INVOKABLE explicit T_Chat(QWidget* parent = nullptr);
     ~T_Chat();
 Q_SIGNALS:
-    Q_SIGNAL void elaScreenNavigation();
-    Q_SIGNAL void elaBaseComponentNavigation();
-    Q_SIGNAL void elaSceneNavigation();
-    Q_SIGNAL void elaCardNavigation();
-    Q_SIGNAL void elaIconNavigation();
+    // Q_SIGNAL void elaScreenNavigation();
+    // Q_SIGNAL void elaBaseComponentNavigation();
+    // Q_SIGNAL void elaSceneNavigation();
+    // Q_SIGNAL void elaCardNavigation();
+    // Q_SIGNAL void elaIconNavigation();
 
 protected:
-    virtual void mouseReleaseEvent(QMouseEvent* event);
+    // virtual void mouseReleaseEvent(QMouseEvent* event);
 
 private:
 };

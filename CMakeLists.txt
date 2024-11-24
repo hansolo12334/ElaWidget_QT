@@ -126,3 +126,15 @@ set_target_properties(ElaWidget_QT PROPERTIES
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(ElaWidget_QT)
 endif()
+
+
+set(SOURCE_DLL "${CMAKE_SOURCE_DIR}/third_party/install/bin/ElaWidgetToolsd.dll")
+set(TARGET_DLL "${CMAKE_BINARY_DIR}/$<CONFIG>/ElaWidgetToolsd.dll")
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${SOURCE_DLL}"
+    "${TARGET_DLL}"
+    COMMENT "Copying ElaWidgetToolsd.dll to output directory"
+)

@@ -1,32 +1,36 @@
 #include "T_Chat.h"
 
 
-#include <QVBoxLayout>
 #include <QScrollBar>
+#include <QVBoxLayout>
 
 #include <QAudioFormat>
 #include <QAudioOutput>
 #include <QBuffer>
 #include <QEventLoop>
 
-#include <QMediaPlayer>
 #include <QAudioSink>
+#include <QMediaPlayer>
 #include <QTemporaryFile>
 
 
-#include "ElaImageCard.h"
+#include "ElaIcon.h"
 #include "ElaIconButton.h"
+#include "ElaImageCard.h"
+#include "ElaInteractiveCard.h"
+#include "ElaPopularCard.h"
+#include "ElaPushButton.h"
 #include "ElaScrollArea.h"
 #include "ElaScrollPageArea.h"
-#include "ElaPushButton.h"
 #include "ElaText.h"
-#include"ElaPopularCard.h"
 
-#include"app_config.h"
+#include "app_config.h"
+#include "history_storage.h"
 
 T_Chat::T_Chat(QWidget *parent) : T_BasePage(parent)
 {
 
+    conversationTimes = AppConfig::instance().getConversationTimes();
 
     ElaImageCard *backgroundCard = new ElaImageCard(this);
     backgroundCard->setBorderRadius(10);
@@ -55,8 +59,12 @@ T_Chat::T_Chat(QWidget *parent) : T_BasePage(parent)
 
 
     text_input_edit = new ElaLineEdit(this);
+    text_input_edit->setFixedHeight(30);
+
     ElaPushButton *sendButton = new ElaPushButton(this);
     ElaPushButton *recevButton = new ElaPushButton(this);
+    sendButton->setFixedHeight(30);
+    // sendButton->set(ElaIconType::Car);
 
     QHBoxLayout *text_input_layout = new QHBoxLayout();
     text_input_layout->addWidget(recevButton);
@@ -85,12 +93,12 @@ T_Chat::T_Chat(QWidget *parent) : T_BasePage(parent)
 
 T_Chat::~T_Chat()
 {
-
 }
 
 void T_Chat::inputTextEvent()
 {
-    if(text_input_edit->text().size()<=0){
+    if (text_input_edit->text().size() <= 0)
+    {
         return;
     }
     qDebug() << "发送~";
@@ -101,18 +109,29 @@ void T_Chat::inputTextEvent()
     // // textArea->setB
     // textArea->setStyleSheet("background-color:transparent;");
 
+    // ElaInteractiveCard *userCard = new ElaInteractiveCard(this);
+    QLabel *userCard = new QLabel(this);
+
+    // userCard->setCardPixMode(ElaCardPixType::PixMode::Ellipse);
+    // userCard->setBaseSize(30, 30);
+    // userCard->setCardPixmap(QPixmap(":/resources/image/640.png"));
+    QPixmap image(":/resources/image/640.png");
+    userCard->setFixedSize(50, 50);
+    userCard->setPixmap(image.scaled(50, 50, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    userCard->setStyleSheet("background-color:transparent;");
 
     ElaText *textText = new ElaText(text_input_edit->text(), this);
     textText->setMaximumWidth(300);
     textText->setWordWrap(true);
     textText->setTextPixelSize(15);
-    textText->setAlignment(Qt::AlignRight);
+    textText->setAlignment(Qt::AlignLeft);
     textText->setStyleSheet("background-color: rgba(128, 128, 128, 20);"); // 设置半透明灰色背景
 
-    QHBoxLayout* textLayout = new QHBoxLayout();
+    QHBoxLayout *textLayout = new QHBoxLayout();
     textLayout->addStretch();
     textLayout->setAlignment(Qt::AlignRight);
     textLayout->addWidget(textText);
+    textLayout->addWidget(userCard);
     // textLayout->addStretch();
 
     // textArea->setFixedHeight(50);
@@ -136,7 +155,8 @@ void T_Chat::inputTextEvent()
 
 void T_Chat::receiveTextEvent()
 {
-    if(text_input_edit->text().size()<=0){
+    if (text_input_edit->text().size() <= 0)
+    {
         return;
     }
     qDebug() << "创建回复气泡";
@@ -154,15 +174,33 @@ void T_Chat::receiveTextEvent()
     textText->setAlignment(Qt::AlignLeft);
     textText->setStyleSheet("background-color: rgba(128, 128, 128, 60);"); // 设置半透明灰色背景
 
+
+    QVBoxLayout *textLayoutBase = new QVBoxLayout();
     QHBoxLayout *textLayout = new QHBoxLayout();
+
+    ElaIconButton *audio_play_bt = new ElaIconButton(ElaIconType::Volume);
+    audio_play_bt->setObjectName(QString::number(conversationTimes + 1));
+    connect(audio_play_bt, &ElaIconButton::clicked, this, [=]() {
+        QByteArray audioData;
+        QString conversationIdx = audio_play_bt->objectName();
+        history_storage::instance().readAudioData(conversationIdx, audioData);
+        playAudio(audioData);
+    });
+
+
     textLayout->setAlignment(Qt::AlignLeft);
     textLayout->addWidget(textText);
+
     textLayout->addStretch();
 
+    textLayoutBase->addLayout(textLayout);
+    textLayoutBase->addWidget(audio_play_bt);
     // textArea->setFixedHeight(50);
     // cardScrollAreaWidgetLayout->setAlignment(Qt::AlignRight);
 
-    cardScrollAreaWidgetLayout->insertLayout(cardScrollAreaWidgetLayout->count() - 1,textLayout);
+
+    cardScrollAreaWidgetLayout->insertLayout(cardScrollAreaWidgetLayout->count() - 1, textLayoutBase);
+
 
     // cardScrollArea->verticalScrollBar()
     QScrollBar *vScrollBar = cardScrollArea->verticalScrollBar();
@@ -173,10 +211,10 @@ void T_Chat::receiveTextEvent()
 }
 
 
-
 void T_Chat::send_requests_to_tts()
 {
-    if(!AppConfig::instance().isEnableTTS()){
+    if (!AppConfig::instance().isEnableTTS())
+    {
         return;
     }
 
@@ -251,7 +289,8 @@ void T_Chat::send_requests_to_tts_after_ollama_auto()
 {
     ServeTTSRequest request;
 
-    request.text = current_receiveText->text();
+
+    request.text = current_receiveText->text().remove("\\s");
     // "合成所需的音频并流式返回";
 
     // request.references.append(ServeReferenceAudio("audio1", "text1"));
@@ -300,8 +339,16 @@ void T_Chat::send_requests_to_tts_after_ollama_auto()
         int status = statusCode.toInt();
         qDebug() << "Status Code:" << status;
     }
-    qDebug() << "playAudio:" ;
+    qDebug() << "playAudio:";
     playAudio(response_data);
+
+    //保存数据
+    conversationTimes++;
+    history_storage::instance().saveAudioData(response_data,
+                                              QString::number(conversationTimes),
+                                              current_receiveText->text());
+    AppConfig::instance().setConversationTimes(conversationTimes);
+    AppConfig::instance().saveSettings();
     // received_txt = plainTextEdit2->toPlainText();
     reply->deleteLater();
 }
@@ -315,9 +362,9 @@ void T_Chat::send_requests_to_ollama()
     request.model = "qwen2-rp";
     request.stream = true;
 
-    request.options.num_predict = 50;
+    request.options.num_predict = AppConfig::instance().getTokenSize();
 
-    Ollama_messages message_a{"assistant", "亲爱的，我是你的性感女友，我会为了你做任何事情。"};
+    Ollama_messages message_a{"assistant", AppConfig::instance().getPromotSentence()};
     // message_a.role = "assistant";
     // message_a.content = "亲爱的，我是你的性感女友，我会为了你做任何事情。";
     Ollama_messages message_u{"user", current_sendText->text()};
@@ -353,7 +400,8 @@ void T_Chat::send_requests_to_ollama()
 
     loop.exec();
 
-    if(!AppConfig::instance().isEnableTTS()){
+    if (!AppConfig::instance().isEnableTTS())
+    {
         return;
     }
     qDebug() << "收到回复 自动转tts。。。";
@@ -399,7 +447,7 @@ void T_Chat::parseResponse(QNetworkReply *reply)
                         // qDebug() << "Parsed content:" << receiving_txt;
                         current_receiveText->clear();
                         qDebug() << current_receiveText;
-                        current_receiveText->setText(receiving_txt);
+                        current_receiveText->setText(receiving_txt.remove("\\s"));
 
                         // 在这里可以使用content变量，例如更新UI
                         // ui->text_talk->setText(ui->text_talk->toPlainText() + content);
@@ -424,6 +472,13 @@ void T_Chat::parseResponse(QNetworkReply *reply)
 
 void T_Chat::playAudio(const QByteArray &audioData)
 {
+    if(isPlayingAudio && audio){
+        qDebug() << "正在播放 停止播放";
+        audio->stop();
+        delete audio;
+        audio = nullptr;
+        isPlayingAudio = false;
+    }
     qDebug() << "in playAudio ";
     // QMediaPlayer * player = new QMediaPlayer(this);
     // QAudioOutput * audioouput = new QAudioOutput(this);
@@ -460,9 +515,19 @@ void T_Chat::playAudio(const QByteArray &audioData)
 
     format.setSampleFormat(QAudioFormat::SampleFormat::Int16);
 
-    QAudioSink *audio = new QAudioSink(format, this);
+    audio = new QAudioSink(format, this);
 
 
     qDebug() << "start";
     audio->start(audioBuffer);
+    isPlayingAudio = true;
+    connect(audio, &QAudioSink::stateChanged, this, [=](QAudio::State state) {
+            if (state == QAudio::StoppedState)
+            {
+                isPlayingAudio = false;
+                audioBuffer->deleteLater();
+                audio->deleteLater();
+                audio = nullptr;
+            }
+        });
 }

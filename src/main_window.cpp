@@ -18,12 +18,13 @@ main_window::main_window(QWidget *parent)
 void main_window::init_window()
 {
     // this->setUserInfoCardVisible(false);
-    this->resize(1200, 740);
+    this->resize(600, 740);
     this->setUserInfoCardTitle(QString("hansolo first try"));
     this->setUserInfoCardSubTitle(QString("111111"));
     this->setUserInfoCardPixmap(QPixmap(":/resources/image/640.png"));
     this->setWindowTitle("Test");
     //移动到中心
+
     this->moveToCenter();
 }
 
@@ -31,6 +32,8 @@ void main_window::init_window()
 void main_window::init_content()
 {
     _homePage = new T_Home(this);
+
+
     _chatPage = new T_Chat(this);
     _settingPage = new T_Setting(this);
 

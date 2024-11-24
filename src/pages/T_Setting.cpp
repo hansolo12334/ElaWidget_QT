@@ -13,6 +13,8 @@
 #include "ElaTheme.h"
 #include "ElaToggleSwitch.h"
 #include "ElaWindow.h"
+#include "ElaLineEdit.h"
+#include "ElaSlider.h"
 
 #include "app_config.h"
 
@@ -81,7 +83,54 @@ T_Setting::T_Setting(QWidget* parent)
         eApp->setIsEnableMica(checked);
     });
 
-    //
+    //ollama
+    //提示词
+    ElaLineEdit *promot_sentence_edit = new ElaLineEdit(this);
+    promot_sentence_edit->setText("亲爱的，我是你的性感女友，我会为了你做任何事情。");
+    AppConfig::instance().setPromotSentence(promot_sentence_edit->text());
+
+    ElaScrollPageArea *promot_sentence_Area = new ElaScrollPageArea(this);
+    QHBoxLayout* promot_sentence_Layout = new QHBoxLayout(promot_sentence_Area);
+    ElaText *promot_sentence_Text = new ElaText("提示语句(记忆)", this);
+    promot_sentence_Text->setWordWrap(false);
+    promot_sentence_Text->setTextPixelSize(15);
+    promot_sentence_Layout->addWidget(promot_sentence_Text);
+    promot_sentence_Layout->addStretch();
+    promot_sentence_Layout->addWidget(promot_sentence_edit);
+    connect(promot_sentence_edit, &ElaLineEdit::textChanged, this, [=]() {
+        //共用的全局设置数据
+        AppConfig::instance().setPromotSentence(promot_sentence_edit->text());
+        AppConfig::instance().saveSettings();
+    });
+
+    //token长度
+    ElaSlider *tokenSize_slider = new ElaSlider(this);
+    tokenSize_slider->setRange(10, 100);
+    tokenSize_slider->setValue(AppConfig::instance().getTokenSize());
+    ElaScrollPageArea *toke_size_Area = new ElaScrollPageArea(this);
+    QHBoxLayout* toke_size_Layout = new QHBoxLayout(toke_size_Area);
+    ElaText *toke_size_Text = new ElaText("句子生成长度", this);
+    toke_size_Text->setWordWrap(false);
+    toke_size_Text->setTextPixelSize(15);
+
+    ElaText *toke_size_value = new ElaText(QString::number(tokenSize_slider->value()), this);
+    toke_size_value->setWordWrap(false);
+    toke_size_value->setTextPixelSize(15);
+
+    toke_size_Layout->addWidget(toke_size_Text);
+    toke_size_Layout->addStretch();
+    toke_size_Layout->addWidget(tokenSize_slider);
+    toke_size_Layout->addWidget(toke_size_value);
+    connect(tokenSize_slider, &ElaSlider::valueChanged, this, [=]() {
+        //共用的全局设置数据
+        toke_size_value->setText(QString::number(tokenSize_slider->value()));
+        AppConfig::instance().setTokenSize(tokenSize_slider->value());
+        AppConfig::instance().saveSettings();
+    });
+
+
+
+    //tts
     _enableTTsButton = new ElaToggleSwitch(this);
     _enableTTsButton->setIsToggled(true);
     qDebug() << "启用 tts";
@@ -98,6 +147,28 @@ T_Setting::T_Setting(QWidget* parent)
         AppConfig::instance().setIsEnableTTS(checked);
         AppConfig::instance().saveSettings();
     });
+
+    //tts音色
+    ElaComboBox *ttsCharacterSelect_combox = new ElaComboBox(this);
+    ttsCharacterSelect_combox->addItem("1");
+    ttsCharacterSelect_combox->addItem("2");
+    ttsCharacterSelect_combox->addItem("3");
+
+    ttsCharacterSelect_combox->setCurrentIndex(AppConfig::instance().getTTsVoiceChoise()-1);
+
+    ElaScrollPageArea *ttsCharacterSelect_Area = new ElaScrollPageArea(this);
+    QHBoxLayout* ttsCharacterSelect_Layout = new QHBoxLayout(ttsCharacterSelect_Area);
+    ElaText *ttsCharacterSelect_Text = new ElaText("TTS音色选择", this);
+    ttsCharacterSelect_Text->setWordWrap(false);
+    ttsCharacterSelect_Text->setTextPixelSize(15);
+    ttsCharacterSelect_Layout->addWidget(ttsCharacterSelect_Text);
+    ttsCharacterSelect_Layout->addStretch();
+    ttsCharacterSelect_Layout->addWidget(ttsCharacterSelect_combox);
+    connect(ttsCharacterSelect_combox, &ElaComboBox::currentIndexChanged, this, [=]() {
+        AppConfig::instance().setTTsVoiceChoise(ttsCharacterSelect_combox->currentText().toInt());
+        AppConfig::instance().saveSettings();
+    });
+
 
     _logSwitchButton = new ElaToggleSwitch(this);
     ElaScrollPageArea* logSwitchArea = new ElaScrollPageArea(this);
@@ -172,7 +243,11 @@ T_Setting::T_Setting(QWidget* parent)
     centerLayout->addWidget(helperText);
     centerLayout->addSpacing(10);
 
+    centerLayout->addWidget(promot_sentence_Area);
+    centerLayout->addWidget(toke_size_Area);
     centerLayout->addWidget(ttsSwitchArea);
+    centerLayout->addWidget(ttsCharacterSelect_Area);
+
     centerLayout->addWidget(logSwitchArea);
     centerLayout->addWidget(micaSwitchArea);
     centerLayout->addWidget(displayModeArea);

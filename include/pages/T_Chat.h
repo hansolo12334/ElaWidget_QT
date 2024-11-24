@@ -9,7 +9,7 @@
 #include "http_tools.h"
 
 #include <QTemporaryFile>
-
+#include <QAudioSink>
 
 class T_Chat : public T_BasePage
 {
@@ -45,6 +45,9 @@ private:
     QString received_txt;
     QByteArray response_data;
 
+    bool isPlayingAudio = false;
+    QAudioSink *audio = nullptr;
+
 public:
     void send_requests_to_tts();
     void send_requests_to_ollama();
@@ -54,6 +57,8 @@ public:
 
     ElaText *current_receiveText = nullptr;
     ElaText *current_sendText = nullptr;
+    QMap<int, ElaText *> receiveTexts;
+    int conversationTimes = 0;
 };
 
 

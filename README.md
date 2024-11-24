@@ -1,2 +1,3 @@
 # ElaWidget_QT
-qt美化
+
+ollam serve chat   + fish-speech tts

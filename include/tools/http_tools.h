@@ -1,3 +1,6 @@
+#ifndef HTTP_TOOLS_H
+#define HTTP_TOOLS_H
+
 #include<QJsonDocument>
 #include<QJsonObject>
 #include<QJsonArray>
@@ -140,3 +143,6 @@ public:
         return json;
     }
 };
+
+
+#endif
